@@ -17,9 +17,6 @@ I used the State with some UI and animation for the 1st to create a beautiful co
 ## :camera_flash: Screenshots
 <!-- You can add more screenshots here if you like -->
 <img src="/results/screenshot_1.png" width="260">&emsp;<img src="/results/screenshot_2.png" width="260">
- <video width="320" height="240" controls>
-  <source src="/results/movie.mp4" type="video/mp4">
-</video>
 
 ## License
 ```
