@@ -16,8 +16,10 @@
 package com.example.androiddevchallenge
 
 import android.os.Bundle
+import android.os.CountDownTimer
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -28,10 +30,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.androiddevchallenge.ui.theme.*
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,8 +67,22 @@ fun MyApp() {
 
 @Composable
 fun CountDownUI() {
-    var progress by remember { mutableStateOf(0.7f) }
-    var time by remember { mutableStateOf("00h 00m 00s") }
+    var progress by remember { mutableStateOf(1f) }
+    var timer: Long = 10_000
+    var time by remember { mutableStateOf("00h 00m ${
+        TimeUnit.MILLISECONDS
+            .toSeconds(timer)
+            .toString()
+            .padStart(2, '0')
+    }s")}
+    val animatedColor by animateColorAsState(
+        targetValue = when {
+            progress < 0.3f -> purple200
+            progress < 0.6f -> purple500
+            progress < 0.9f -> purple700
+            else -> Color.Black
+        }
+    )
     var changeClockCountDown by remember { mutableStateOf(false) }
 
 
@@ -91,7 +109,7 @@ fun CountDownUI() {
             CircularProgressIndicator(
                 progress = progress,
                 strokeWidth = 2.dp,
-                color = purple200,
+                color = animatedColor,
                 modifier = Modifier.width(300.dp)
             )
             Row(
@@ -104,7 +122,8 @@ fun CountDownUI() {
                 if (!changeClockCountDown)
                     Text(
                         text = time,
-                        style = typography.h3
+                        style = typography.h3,
+                        color = animatedColor
                     )
                 else
                     TextField(
@@ -118,7 +137,32 @@ fun CountDownUI() {
 
         Row(
         ) {
-            Button(onClick = { /*TODO*/ }) {
+            Button(onClick = {
+                progress = 0.0f
+                val timer = object : CountDownTimer(timer, 1000) {
+                    override fun onTick(millisUntilFinished: Long) {
+                        time = "00h 00m ${
+                            TimeUnit.MILLISECONDS
+                                .toSeconds(millisUntilFinished)
+                                .toString()
+                                .padStart(2, '0')
+                        }s"
+                        val percentageCompleted = millisUntilFinished / (timer / 100)
+                        progress = percentageCompleted / 100f
+                    }
+
+                    override fun onFinish() {
+                        progress = 1f
+                        time = "00h 00m ${
+                            TimeUnit.MILLISECONDS
+                                .toSeconds(timer)
+                                .toString()
+                                .padStart(2, '0')
+                        }s"
+                    }
+                }
+                timer.start()
+            }) {
                 Text(text = "Start")
             }
             Spacer(modifier = Modifier.padding(8.dp))
