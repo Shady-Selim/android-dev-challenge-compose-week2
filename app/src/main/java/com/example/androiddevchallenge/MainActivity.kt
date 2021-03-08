@@ -74,12 +74,16 @@ fun CountDownUI() {
     var progress by remember { mutableStateOf(1f) }
     var timer: Long by remember { mutableStateOf(10_000) }
     var tempTimer by remember { mutableStateOf(timer) }
-    var time by remember { mutableStateOf("00h 00m ${
-        TimeUnit.MILLISECONDS
-            .toSeconds(timer)
-            .toString()
-            .padStart(2, '0')
-    }s")}
+    var time by remember {
+        mutableStateOf(
+            "00h 00m ${
+                TimeUnit.MILLISECONDS
+                    .toSeconds(timer)
+                    .toString()
+                    .padStart(2, '0')
+            }s"
+        )
+    }
 
     val animatedColor by animateColorAsState(
         targetValue = when {
@@ -157,19 +161,21 @@ fun CountDownUI() {
                         text = time,
                         style = typography.h3,
                         color = animatedColor,
-                        modifier = Modifier.clickable(onClick = { changeClockCountDown = true
-                            if(counterPause)
+                        modifier = Modifier.clickable(onClick = {
+                            changeClockCountDown = true
+                            if (counterPause)
                                 countDownTimer.onFinish()
                             else {
                                 counterPause = true
                                 counterCancel = true
-                            }})
+                            }
+                        })
                     )
                 else {
                     Column {
-                        Box{
+                        Box {
                             TextField(
-                                value = (timer/1000).toString(),
+                                value = (timer / 1000).toString(),
                                 onValueChange = {
                                     timer = if (it != "")
                                         it.toLong() * 1000
@@ -200,14 +206,13 @@ fun CountDownUI() {
         Row {
 
 
-
-            if (!counterStarted){
+            if (!counterStarted) {
                 Button(onClick = {
-                        progress = 0.0f
-                        countDownTimer.start()
-                        counterCancel = false
-                        counterStarted = true
-                        counterPause = false
+                    progress = 0.0f
+                    countDownTimer.start()
+                    counterCancel = false
+                    counterStarted = true
+                    counterPause = false
 
                 }) {
                     Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = "")
@@ -215,13 +220,14 @@ fun CountDownUI() {
             } else {
                 Button(onClick = {
                     counterStarted = false
-                    counterPause = true }) {
+                    counterPause = true
+                }) {
                     Icon(imageVector = Icons.Filled.Pause, contentDescription = "")
                 }
             }
             Spacer(modifier = Modifier.padding(8.dp))
             Button(onClick = {
-                if(counterPause)
+                if (counterPause)
                     countDownTimer.onFinish()
                 else {
                     counterPause = true
@@ -250,9 +256,9 @@ fun DarkPreview() {
     }
 }
 
-fun timeToString(time: Long): String{
-    val sec = (TimeUnit.MILLISECONDS.toSeconds(time)%60).toString().padStart(2, '0')
-    val min = (TimeUnit.MILLISECONDS.toMinutes(time)%60).toString().padStart(2, '0')
+fun timeToString(time: Long): String {
+    val sec = (TimeUnit.MILLISECONDS.toSeconds(time) % 60).toString().padStart(2, '0')
+    val min = (TimeUnit.MILLISECONDS.toMinutes(time) % 60).toString().padStart(2, '0')
     val hr = TimeUnit.MILLISECONDS.toHours(time).toString().padStart(2, '0')
     return "${hr}h ${min}m ${sec}s"
 }
