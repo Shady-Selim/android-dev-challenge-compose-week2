@@ -20,6 +20,7 @@ import android.os.CountDownTimer
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -71,7 +72,7 @@ fun MyApp() {
 @Composable
 fun CountDownUI() {
     var progress by remember { mutableStateOf(1f) }
-    var timer: Long = 10_000
+    var timer: Long by remember { mutableStateOf(10_000) }
     var tempTimer by remember { mutableStateOf(timer) }
     var time by remember { mutableStateOf("00h 00m ${
         TimeUnit.MILLISECONDS
@@ -79,6 +80,7 @@ fun CountDownUI() {
             .toString()
             .padStart(2, '0')
     }s")}
+
     val animatedColor by animateColorAsState(
         targetValue = when {
             progress < 0.3f -> purple200
@@ -88,6 +90,33 @@ fun CountDownUI() {
         }
     )
     var changeClockCountDown by remember { mutableStateOf(false) }
+
+    var counterCancel by remember { mutableStateOf(false) }
+    var counterPause by remember { mutableStateOf(false) }
+    var counterStarted by remember { mutableStateOf(false) }
+
+    val countDownTimer = object : CountDownTimer(tempTimer, 1000) {
+        override fun onTick(msToFinished: Long) {
+            if (counterPause) {
+                this.cancel()
+                tempTimer = msToFinished
+            }
+
+            time = timeToString(msToFinished)
+            val percentageCompleted = msToFinished / (timer / 100)
+            progress = percentageCompleted / 100f
+
+            if (counterCancel)
+                this.onFinish()
+        }
+
+        override fun onFinish() {
+            progress = 1f
+            time = timeToString(timer)
+            tempTimer = timer
+            counterStarted = false
+        }
+    }
 
 
     Column(
@@ -127,56 +156,49 @@ fun CountDownUI() {
                     Text(
                         text = time,
                         style = typography.h3,
-                        color = animatedColor
+                        color = animatedColor,
+                        modifier = Modifier.clickable(onClick = { changeClockCountDown = true
+                            if(counterPause)
+                                countDownTimer.onFinish()
+                            else {
+                                counterPause = true
+                                counterCancel = true
+                            }})
                     )
-                else
-                    TextField(
-                        value = time,
-                        onValueChange = { time = it },
-                        textStyle = typography.h3,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                    )
+                else {
+                    Column {
+                        Box{
+                            TextField(
+                                value = (timer/1000).toString(),
+                                onValueChange = {
+                                    timer = if (it != "")
+                                        it.toLong() * 1000
+                                    else
+                                        0
+                                },
+                                textStyle = typography.h3,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                singleLine = true,
+                            )
+                            Text(text = "seconds")
+                        }
+                        Button(onClick = {
+                            changeClockCountDown = false
+                            tempTimer = timer
+                            countDownTimer.start()
+                        }) {
+                            Text(text = "Set")
+                        }
+                    }
+
+
+                }
+
             }
         }
 
-        Row(
-        ) {
-            var counterCancel by remember { mutableStateOf(false) }
-            var counterPause by remember { mutableStateOf(false) }
-            var counterStarted by remember { mutableStateOf(false) }
+        Row {
 
-            val countDownTimer = object : CountDownTimer(tempTimer, 1000) {
-                override fun onTick(millisUntilFinished: Long) {
-                    if (counterPause) {
-                        this.cancel()
-                        tempTimer = millisUntilFinished
-                    }
-
-                    time = "00h 00m ${
-                        TimeUnit.MILLISECONDS
-                            .toSeconds(millisUntilFinished)
-                            .toString()
-                            .padStart(2, '0')
-                    }s"
-                    val percentageCompleted = millisUntilFinished / (timer / 100)
-                    progress = percentageCompleted / 100f
-
-                    if (counterCancel)
-                        this.onFinish()
-                }
-
-                override fun onFinish() {
-                    progress = 1f
-                    time = "00h 00m ${
-                        TimeUnit.MILLISECONDS
-                            .toSeconds(timer)
-                            .toString()
-                            .padStart(2, '0')
-                    }s"
-                    tempTimer = timer
-                    counterStarted = false
-                }
-            }
 
 
             if (!counterStarted){
@@ -226,4 +248,11 @@ fun DarkPreview() {
     MyTheme(darkTheme = true) {
         MyApp()
     }
+}
+
+fun timeToString(time: Long): String{
+    val sec = (TimeUnit.MILLISECONDS.toSeconds(time)%60).toString().padStart(2, '0')
+    val min = (TimeUnit.MILLISECONDS.toMinutes(time)%60).toString().padStart(2, '0')
+    val hr = TimeUnit.MILLISECONDS.toHours(time).toString().padStart(2, '0')
+    return "${hr}h ${min}m ${sec}s"
 }
