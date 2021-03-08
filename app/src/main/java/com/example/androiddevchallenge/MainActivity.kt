@@ -55,22 +55,6 @@ class MainActivity : AppCompatActivity() {
 // Start building your app here!
 @Composable
 fun MyApp() {
-    Surface(
-        color = MaterialTheme.colors.background,
-    ) {
-        Card(
-            elevation = 4.dp,
-            modifier = Modifier
-                .padding(32.dp)
-                .fillMaxWidth(),
-        ) {
-            CountDownUI()
-        }
-    }
-}
-
-@Composable
-fun CountDownUI() {
     var progress by remember { mutableStateOf(1f) }
     var timer: Long by remember { mutableStateOf(10_000) }
     var tempTimer by remember { mutableStateOf(timer) }
@@ -94,7 +78,6 @@ fun CountDownUI() {
         }
     )
     var changeClockCountDown by remember { mutableStateOf(false) }
-
     var counterCancel by remember { mutableStateOf(false) }
     var counterPause by remember { mutableStateOf(false) }
     var counterStarted by remember { mutableStateOf(false) }
@@ -122,119 +105,130 @@ fun CountDownUI() {
         }
     }
 
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
+    Surface(
+        color = animatedColor,
+        modifier = Modifier.fillMaxHeight()
     ) {
-        Box(
+        Card(
+            elevation = 4.dp,
             modifier = Modifier
-                .wrapContentHeight()
-                .padding(bottom = 16.dp)
-
+                .padding(32.dp)
+                .fillMaxWidth().wrapContentHeight()
         ) {
-            CircularProgressIndicator(
-                progress = 1f,
-                strokeWidth = 2.dp,
-                color = teal200,
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .height(300.dp)
-                    .width(300.dp)
-            )
-            CircularProgressIndicator(
-                progress = progress,
-                strokeWidth = 2.dp,
-                color = animatedColor,
-                modifier = Modifier.width(300.dp)
-            )
-            Row(
-                modifier = Modifier
-                    .height(300.dp)
-                    .width(300.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxWidth()
+                    .padding(16.dp)
             ) {
-                if (!changeClockCountDown)
-                    Text(
-                        text = time,
-                        style = typography.h3,
-                        color = animatedColor,
-                        modifier = Modifier.clickable(onClick = {
-                            changeClockCountDown = true
-                            if (counterPause)
-                                countDownTimer.onFinish()
-                            else {
-                                counterPause = true
-                                counterCancel = true
-                            }
-                        })
+                Box(
+                    modifier = Modifier
+                        .wrapContentHeight()
+                        .padding(bottom = 16.dp)
+
+                ) {
+                    CircularProgressIndicator(
+                        progress = 1f,
+                        strokeWidth = 2.dp,
+                        color = teal200,
+                        modifier = Modifier
+                            .height(300.dp)
+                            .width(300.dp)
                     )
-                else {
-                    Column {
-                        Box {
-                            TextField(
-                                value = (timer / 1000).toString(),
-                                onValueChange = {
-                                    timer = if (it != "")
-                                        it.toLong() * 1000
-                                    else
-                                        0
-                                },
-                                textStyle = typography.h3,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                                singleLine = true,
+                    CircularProgressIndicator(
+                        progress = progress,
+                        strokeWidth = 2.dp,
+                        color = animatedColor,
+                        modifier = Modifier.width(300.dp)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .height(300.dp)
+                            .width(300.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (!changeClockCountDown)
+                            Text(
+                                text = time,
+                                style = typography.h3,
+                                color = animatedColor,
+                                modifier = Modifier.clickable(onClick = {
+                                    changeClockCountDown = true
+                                    if (counterPause)
+                                        countDownTimer.onFinish()
+                                    else {
+                                        counterPause = true
+                                        counterCancel = true
+                                    }
+                                })
                             )
-                            Text(text = "seconds")
+                        else {
+                            Column {
+                                Box {
+                                    TextField(
+                                        value = (timer / 1000).toString(),
+                                        onValueChange = {
+                                            timer = if (it != "")
+                                                it.toLong() * 1000
+                                            else
+                                                0
+                                        },
+                                        textStyle = typography.h3,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                        singleLine = true,
+                                    )
+                                    Text(text = "seconds")
+                                }
+                                Button(onClick = {
+                                    changeClockCountDown = false
+                                    tempTimer = timer
+                                    countDownTimer.start()
+                                }) {
+                                    Text(text = "Set")
+                                }
+                            }
+
+
                         }
+
+                    }
+                }
+
+                Row {
+
+
+                    if (!counterStarted) {
                         Button(onClick = {
-                            changeClockCountDown = false
-                            tempTimer = timer
+                            progress = 0.0f
                             countDownTimer.start()
+                            counterCancel = false
+                            counterStarted = true
+                            counterPause = false
+
                         }) {
-                            Text(text = "Set")
+                            Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = "")
+                        }
+                    } else {
+                        Button(onClick = {
+                            counterStarted = false
+                            counterPause = true
+                        }) {
+                            Icon(imageVector = Icons.Filled.Pause, contentDescription = "")
                         }
                     }
-
-
+                    Spacer(modifier = Modifier.padding(8.dp))
+                    Button(onClick = {
+                        if (counterPause)
+                            countDownTimer.onFinish()
+                        else {
+                            counterPause = true
+                            counterCancel = true
+                        }
+                    }) {
+                        Icon(imageVector = Icons.Filled.Stop, contentDescription = "")
+                    }
                 }
-
-            }
-        }
-
-        Row {
-
-
-            if (!counterStarted) {
-                Button(onClick = {
-                    progress = 0.0f
-                    countDownTimer.start()
-                    counterCancel = false
-                    counterStarted = true
-                    counterPause = false
-
-                }) {
-                    Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = "")
-                }
-            } else {
-                Button(onClick = {
-                    counterStarted = false
-                    counterPause = true
-                }) {
-                    Icon(imageVector = Icons.Filled.Pause, contentDescription = "")
-                }
-            }
-            Spacer(modifier = Modifier.padding(8.dp))
-            Button(onClick = {
-                if (counterPause)
-                    countDownTimer.onFinish()
-                else {
-                    counterPause = true
-                    counterCancel = true
-                }
-            }) {
-                Icon(imageVector = Icons.Filled.Stop, contentDescription = "")
             }
         }
     }
