@@ -23,6 +23,10 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,7 +34,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,7 +61,7 @@ fun MyApp() {
             elevation = 4.dp,
             modifier = Modifier
                 .padding(32.dp)
-                .fillMaxWidth()
+                .fillMaxWidth(),
         ) {
             CountDownUI()
         }
@@ -69,6 +72,7 @@ fun MyApp() {
 fun CountDownUI() {
     var progress by remember { mutableStateOf(1f) }
     var timer: Long = 10_000
+    var tempTimer by remember { mutableStateOf(timer) }
     var time by remember { mutableStateOf("00h 00m ${
         TimeUnit.MILLISECONDS
             .toSeconds(timer)
@@ -80,7 +84,7 @@ fun CountDownUI() {
             progress < 0.3f -> purple200
             progress < 0.6f -> purple500
             progress < 0.9f -> purple700
-            else -> Color.Black
+            else -> MaterialTheme.colors.onBackground
         }
     )
     var changeClockCountDown by remember { mutableStateOf(false) }
@@ -137,41 +141,72 @@ fun CountDownUI() {
 
         Row(
         ) {
-            Button(onClick = {
-                progress = 0.0f
-                val timer = object : CountDownTimer(timer, 1000) {
-                    override fun onTick(millisUntilFinished: Long) {
-                        time = "00h 00m ${
-                            TimeUnit.MILLISECONDS
-                                .toSeconds(millisUntilFinished)
-                                .toString()
-                                .padStart(2, '0')
-                        }s"
-                        val percentageCompleted = millisUntilFinished / (timer / 100)
-                        progress = percentageCompleted / 100f
+            var counterCancel by remember { mutableStateOf(false) }
+            var counterPause by remember { mutableStateOf(false) }
+            var counterStarted by remember { mutableStateOf(false) }
+
+            val countDownTimer = object : CountDownTimer(tempTimer, 1000) {
+                override fun onTick(millisUntilFinished: Long) {
+                    if (counterPause) {
+                        this.cancel()
+                        tempTimer = millisUntilFinished
                     }
 
-                    override fun onFinish() {
-                        progress = 1f
-                        time = "00h 00m ${
-                            TimeUnit.MILLISECONDS
-                                .toSeconds(timer)
-                                .toString()
-                                .padStart(2, '0')
-                        }s"
-                    }
+                    time = "00h 00m ${
+                        TimeUnit.MILLISECONDS
+                            .toSeconds(millisUntilFinished)
+                            .toString()
+                            .padStart(2, '0')
+                    }s"
+                    val percentageCompleted = millisUntilFinished / (timer / 100)
+                    progress = percentageCompleted / 100f
+
+                    if (counterCancel)
+                        this.onFinish()
                 }
-                timer.start()
+
+                override fun onFinish() {
+                    progress = 1f
+                    time = "00h 00m ${
+                        TimeUnit.MILLISECONDS
+                            .toSeconds(timer)
+                            .toString()
+                            .padStart(2, '0')
+                    }s"
+                    tempTimer = timer
+                    counterStarted = false
+                }
+            }
+
+
+            if (!counterStarted){
+                Button(onClick = {
+                        progress = 0.0f
+                        countDownTimer.start()
+                        counterCancel = false
+                        counterStarted = true
+                        counterPause = false
+
+                }) {
+                    Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = "")
+                }
+            } else {
+                Button(onClick = {
+                    counterStarted = false
+                    counterPause = true }) {
+                    Icon(imageVector = Icons.Filled.Pause, contentDescription = "")
+                }
+            }
+            Spacer(modifier = Modifier.padding(8.dp))
+            Button(onClick = {
+                if(counterPause)
+                    countDownTimer.onFinish()
+                else {
+                    counterPause = true
+                    counterCancel = true
+                }
             }) {
-                Text(text = "Start")
-            }
-            Spacer(modifier = Modifier.padding(8.dp))
-            Button(onClick = { /*TODO*/ }) {
-                Text(text = "Stop")
-            }
-            Spacer(modifier = Modifier.padding(8.dp))
-            Button(onClick = { /*TODO*/ }) {
-                Text(text = "Cancel")
+                Icon(imageVector = Icons.Filled.Stop, contentDescription = "")
             }
         }
     }
